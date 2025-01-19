@@ -25,7 +25,6 @@ public class TorrentServer extends Computer {
         String infoHash = file.getInfoHash();
         if (infoHash != null && !activePeers.containsKey(infoHash)) {
             activePeers.put(infoHash, new HashSet<>());
-            System.out.println("Added new file: " + file.getFileName());
         }
     }
 
