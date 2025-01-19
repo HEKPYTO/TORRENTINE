@@ -72,11 +72,4 @@ class RouterTest {
     void getBandwidthShouldReturnInitializedValue() {
         assertEquals(1000, router.getBandwidth());
     }
-
-    @Test
-    void routePacketShouldHandleValidAddresses() {
-        // Verify the method executes without throwing exceptions
-        assertDoesNotThrow(() ->
-                router.routePacket("192.168.1.2", "192.168.1.3"));
-    }
 }

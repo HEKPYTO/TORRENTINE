@@ -1,8 +1,8 @@
 package base;
 
 public class Computer extends Router {
-    protected double maxUploadSpeed;
-    protected double maxDownloadSpeed;
+    protected final double maxUploadSpeed;
+    protected final double maxDownloadSpeed;
     protected long storageCapacity;
     protected long usedStorage;
 
@@ -31,7 +31,7 @@ public class Computer extends Router {
         return usedStorage;
     }
 
-    protected boolean hasStorageSpace(long requiredSpace) {
+    public boolean hasStorageSpace(long requiredSpace) {
         return (usedStorage + requiredSpace) <= storageCapacity;
     }
 }

@@ -9,18 +9,18 @@ public class Router extends NetworkDevice {
 
     public Router(String deviceID, String ipAddress, String location, int bandwidth) {
         super(deviceID, ipAddress, location);
-        this.bandwidth = bandwidth;
+        setBandwidth(bandwidth);
         this.routingTable = new HashMap<>();
         this.connectedDevices = new ArrayList<>();
-    }
-
-    public void routePacket(String source, String destination) {
-        System.out.println("Routing packet: " + source + " -> " + destination);
     }
 
     public void addDevice(NetworkDevice device) {
         connectedDevices.add(device);
         routingTable.put(device.getIpAddress(), device.getDeviceID());
+    }
+
+    public void setBandwidth(int bandwidth) {
+        this.bandwidth = Math.max(0, bandwidth);
     }
 
     public int getBandwidth() {

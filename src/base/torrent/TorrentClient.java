@@ -95,7 +95,6 @@ public class TorrentClient extends Computer {
         status.updateTransfer(uploaded, downloaded);
     }
 
-    // Getters
     public int getNextNeededPiece(String infoHash) {
         TorrentFile file = downloadingFiles.get(infoHash);
         if (file != null) {

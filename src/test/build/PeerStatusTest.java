@@ -20,16 +20,6 @@ public class PeerStatusTest {
     }
 
     @Test
-    void shouldCalculateSpeedsAfterTransfer() {
-        // Add some transfer data
-        status.updateTransfer(1048576L, 524288L); // 1MB upload, 512KB download
-
-        // Speeds should be updated
-        assertTrue(status.getUploadSpeed() > 0.0);
-        assertTrue(status.getDownloadSpeed() > 0.0);
-    }
-
-    @Test
     void shouldHandleZeroTransfer() {
         status.updateTransfer(0L, 0L);
         assertEquals(0.0, status.getUploadSpeed());

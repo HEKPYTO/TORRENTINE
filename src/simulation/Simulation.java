@@ -19,7 +19,7 @@ public class Simulation {
     public Simulation() {
         this.random = new Random();
         this.tracker = createTracker();
-        this.initialSeeder = createInitialSeeder();  // Changed method name
+        this.initialSeeder = createInitialSeeder();
         this.peers = createPeers(3); // Start with 3 peers
         this.torrentFile = createTorrentFile();
         initializeNetwork();
@@ -44,8 +44,8 @@ public class Simulation {
                     String.format("10.0.1.%d", i + 1),
                     "LOCATION" + (i + 1),
                     100,
-                    10.0,
-                    20.0,
+                    1000.0,
+                    1000.0,
                     FILE_SIZE * 2
             );
             newPeers.add(peer);

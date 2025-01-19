@@ -4,10 +4,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SwarmInfo {
-    private String infoHash;
+    private final String infoHash;
     private int numSeeders;
     private int numLeechers;
-    private Set<String> activePeers;
+    private final Set<String> activePeers;
     private long totalTransferred;
 
     public SwarmInfo(String infoHash) {
