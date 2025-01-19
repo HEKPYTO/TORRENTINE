@@ -131,7 +131,4 @@ The simulation generates status output including:
 - Piece completion statistics
 - Network state information
 - Aggregate performance metrics
-
-## License and Usage
-
-This software is provided for educational and research purposes. Implementation of this simulation in production environments is not recommended. Users must ensure compliance with all applicable laws and regulations regarding peer-to-peer network implementations.
+ed for educational and research purposes. Implementation of this simulation in production environments is not recommended. Users must ensure compliance with all applicable laws and regulations regarding peer-to-peer network implementations.
