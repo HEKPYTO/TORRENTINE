@@ -2,13 +2,13 @@ package base;
 
 import util.IPUtils;
 
-public class NetworkDevice {
+public class Device {
     private final String deviceID;
     private final String ipAddress;
     private final String location;
     private boolean isOnline;
 
-    public NetworkDevice(String deviceID, String ipAddress, String location) {
+    public Device(String deviceID, String ipAddress, String location) {
         this.deviceID = deviceID;
         this.ipAddress = IPUtils.validateIP(ipAddress);
         this.location = location;
@@ -26,6 +26,6 @@ public class NetworkDevice {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof NetworkDevice && ((NetworkDevice) obj).deviceID.equals(this.deviceID);
+        return obj instanceof Device && ((Device) obj).deviceID.equals(this.deviceID);
     }
 }

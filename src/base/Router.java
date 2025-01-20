@@ -2,10 +2,10 @@ package base;
 
 import java.util.*;
 
-public class Router extends NetworkDevice {
+public class Router extends Device {
     protected int bandwidth;
     protected final Map<String, String> routingTable;
-    protected final List<NetworkDevice> connectedDevices;
+    protected final List<Device> connectedDevices;
 
     public Router(String deviceID, String ipAddress, String location, int bandwidth) {
         super(deviceID, ipAddress, location);
@@ -14,10 +14,22 @@ public class Router extends NetworkDevice {
         this.connectedDevices = new ArrayList<>();
     }
 
-    public void addDevice(NetworkDevice device) {
-        if (device == null) return;
+    public boolean addDevice(Device device) {
+        if (device == null) return false;
         connectedDevices.add(device);
         routingTable.put(device.getIpAddress(), device.getDeviceID());
+        return true;
+    }
+
+    public boolean removeDevice(Device device) {
+        if (device == null) {
+            return false;
+        }
+        boolean removed = connectedDevices.remove(device);
+        if (removed) {
+            routingTable.remove(device.getIpAddress());
+        }
+        return removed;
     }
 
     public void setBandwidth(int bandwidth) {
@@ -32,7 +44,7 @@ public class Router extends NetworkDevice {
         return routingTable;
     }
 
-    public List<NetworkDevice> getConnectedDevices() {
+    public List<Device> getConnectedDevices() {
         return connectedDevices;
     }
 }

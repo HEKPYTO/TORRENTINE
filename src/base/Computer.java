@@ -31,6 +31,14 @@ public class Computer extends Router {
         return usedStorage;
     }
 
+    public void setStorageCapacity(long storageCapacity) {
+        this.storageCapacity = Math.max(storageCapacity, 0);
+    }
+
+    public void setUsedStorage(long usedStorage) {
+        this.usedStorage = Math.min(Math.max(usedStorage, 0), storageCapacity);
+    }
+
     public boolean hasStorageSpace(long requiredSpace) {
         return (usedStorage + requiredSpace) <= storageCapacity;
     }

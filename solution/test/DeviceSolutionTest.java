@@ -1,19 +1,19 @@
 package test.solution;
 
-import base.NetworkDevice;
+import base.Device;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
-class NetworkDeviceSolutionTest {
-    private NetworkDevice device;
+class DeviceSolutionTest {
+    private Device device;
     private static final String VALID_DEVICE_ID = "NET001";
     private static final String VALID_IP = "172.16.1.1";
     private static final String VALID_LOCATION = "SEA";
 
     @BeforeEach
     void setUp() {
-        device = new NetworkDevice(VALID_DEVICE_ID, VALID_IP, VALID_LOCATION);
+        device = new Device(VALID_DEVICE_ID, VALID_IP, VALID_LOCATION);
     }
 
     @Test
@@ -36,10 +36,10 @@ class NetworkDeviceSolutionTest {
 
     @Test
     void shouldImplementEqualsCorrectly() {
-        NetworkDevice sameIdDevice1 = new NetworkDevice(VALID_DEVICE_ID, "192.168.1.1", "PDX");
-        NetworkDevice sameIdDevice2 = new NetworkDevice(VALID_DEVICE_ID, "10.0.0.1", "SFO");
+        Device sameIdDevice1 = new Device(VALID_DEVICE_ID, "192.168.1.1", "PDX");
+        Device sameIdDevice2 = new Device(VALID_DEVICE_ID, "10.0.0.1", "SFO");
 
-        NetworkDevice differentIdDevice = new NetworkDevice("NET002", VALID_IP, VALID_LOCATION);
+        Device differentIdDevice = new Device("NET002", VALID_IP, VALID_LOCATION);
 
         assertEquals(device, sameIdDevice1, "Devices with same ID should be equal");
         assertEquals(sameIdDevice1, sameIdDevice2, "Devices with same ID should be equal");
@@ -50,17 +50,17 @@ class NetworkDeviceSolutionTest {
 
     @Test
     void shouldHandleEqualsEdgeCases() {
-        NetworkDevice upperCase = new NetworkDevice("NET001", VALID_IP, VALID_LOCATION);
-        NetworkDevice lowerCase = new NetworkDevice("net001", VALID_IP, VALID_LOCATION);
-        NetworkDevice mixedCase = new NetworkDevice("Net001", VALID_IP, VALID_LOCATION);
+        Device upperCase = new Device("NET001", VALID_IP, VALID_LOCATION);
+        Device lowerCase = new Device("net001", VALID_IP, VALID_LOCATION);
+        Device mixedCase = new Device("Net001", VALID_IP, VALID_LOCATION);
 
         assertNotEquals(upperCase, lowerCase, "Different case IDs should not be equal");
         assertNotEquals(upperCase, mixedCase, "Different case IDs should not be equal");
         assertNotEquals(lowerCase, mixedCase, "Different case IDs should not be equal");
 
-        NetworkDevice withHyphen = new NetworkDevice("NET-001", VALID_IP, VALID_LOCATION);
-        NetworkDevice withUnderscore = new NetworkDevice("NET_001", VALID_IP, VALID_LOCATION);
-        NetworkDevice withDot = new NetworkDevice("NET.001", VALID_IP, VALID_LOCATION);
+        Device withHyphen = new Device("NET-001", VALID_IP, VALID_LOCATION);
+        Device withUnderscore = new Device("NET_001", VALID_IP, VALID_LOCATION);
+        Device withDot = new Device("NET.001", VALID_IP, VALID_LOCATION);
 
         assertNotEquals(device, withHyphen, "IDs with different special characters should not be equal");
         assertNotEquals(device, withUnderscore, "IDs with different special characters should not be equal");

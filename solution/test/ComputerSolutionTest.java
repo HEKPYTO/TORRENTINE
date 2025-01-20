@@ -1,7 +1,7 @@
 package test.solution;
 
 import base.Computer;
-import base.NetworkDevice;
+import base.Device;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -9,12 +9,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ComputerSolutionTest {
     private Computer computer;
-    private NetworkDevice testDevice;
+    private Device testDevice;
 
     @BeforeEach
     void setUp() {
         computer = new Computer("CMP001", "192.168.1.1", "NYC", 1000, 50.0, 100.0, 1000000L);
-        testDevice = new NetworkDevice("DEV001", "192.168.1.2", "NYC");
+        testDevice = new Device("DEV001", "192.168.1.2", "NYC");
     }
 
     @Test
@@ -42,6 +42,40 @@ class ComputerSolutionTest {
 
         assertTrue(computer.hasStorageSpace(computer.getStorageCapacity()));
         assertFalse(computer.hasStorageSpace(computer.getStorageCapacity() + 1));
+    }
+
+    @Test
+    void shouldManageStorageCapacity() {
+        computer.setStorageCapacity(2000000L);
+        assertEquals(2000000L, computer.getStorageCapacity(), "Should update to valid capacity");
+
+        computer.setStorageCapacity(-1L);
+        assertEquals(0L, computer.getStorageCapacity(), "Should convert negative to zero");
+
+        computer.setStorageCapacity(0L);
+        assertEquals(0L, computer.getStorageCapacity(), "Should accept zero capacity");
+
+        computer.setStorageCapacity(500000L);
+        computer.setUsedStorage(300000L);
+        assertEquals(300000L, computer.getUsedStorage());
+
+        computer.setStorageCapacity(200000L);
+        assertEquals(300000L, computer.getUsedStorage(), "Used storage remains unchanged when capacity decreases");
+
+        computer.setUsedStorage(300000L);
+        assertEquals(200000L, computer.getUsedStorage(), "New used storage respects current capacity");
+    }
+
+    @Test
+    void shouldManageUsedStorage() {
+        computer.setUsedStorage(500000L);
+        assertEquals(500000L, computer.getUsedStorage(), "Should set valid used storage");
+
+        computer.setUsedStorage(-1L);
+        assertEquals(0L, computer.getUsedStorage(), "Should handle negative value");
+
+        computer.setUsedStorage(2000000L);
+        assertEquals(1000000L, computer.getUsedStorage(), "Should cap at capacity");
     }
 
     @Test

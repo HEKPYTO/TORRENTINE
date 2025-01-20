@@ -1,18 +1,18 @@
 package test.build;
 
-import base.NetworkDevice;
+import base.Device;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
-class NetworkDeviceTest {
-    private NetworkDevice device;
+class DeviceTest {
+    private Device device;
 
     @BeforeEach
     void setUp() {
-        device = new NetworkDevice("DEV001", "192.168.1.1", "NYC");
+        device = new Device("DEV001", "192.168.1.1", "NYC");
     }
 
     @Test
@@ -37,7 +37,7 @@ class NetworkDeviceTest {
     })
     void constructorShouldThrowOnInvalidIP(String invalidIP) {
         assertThrows(IllegalArgumentException.class,
-                () -> new NetworkDevice("DEV001", invalidIP, "NYC"));
+                () -> new Device("DEV001", invalidIP, "NYC"));
     }
 
     @Test
@@ -50,8 +50,8 @@ class NetworkDeviceTest {
 
     @Test
     void equalsShouldCheckDeviceIDOnly() {
-        NetworkDevice sameDevice = new NetworkDevice("DEV001", "192.168.1.2", "LAX");
-        NetworkDevice differentDevice = new NetworkDevice("DEV002", "192.168.1.1", "NYC");
+        Device sameDevice = new Device("DEV001", "192.168.1.2", "LAX");
+        Device differentDevice = new Device("DEV002", "192.168.1.1", "NYC");
 
         assertEquals(device, sameDevice, "Devices with same ID should be equal");
         assertNotEquals(device, differentDevice, "Devices with different IDs should not be equal");
@@ -62,10 +62,10 @@ class NetworkDeviceTest {
     @Test
     void validIPsShouldBeAccepted() {
         // Test boundary cases for valid IPs
-        assertDoesNotThrow(() -> new NetworkDevice("DEV002", "0.0.0.0", "NYC"));
-        assertDoesNotThrow(() -> new NetworkDevice("DEV003", "255.255.255.255", "NYC"));
-        assertDoesNotThrow(() -> new NetworkDevice("DEV004", "192.168.0.1", "NYC"));
-        assertDoesNotThrow(() -> new NetworkDevice("DEV005", "10.0.0.0", "NYC"));
-        assertDoesNotThrow(() -> new NetworkDevice("DEV006", "172.16.0.1", "NYC"));
+        assertDoesNotThrow(() -> new Device("DEV002", "0.0.0.0", "NYC"));
+        assertDoesNotThrow(() -> new Device("DEV003", "255.255.255.255", "NYC"));
+        assertDoesNotThrow(() -> new Device("DEV004", "192.168.0.1", "NYC"));
+        assertDoesNotThrow(() -> new Device("DEV005", "10.0.0.0", "NYC"));
+        assertDoesNotThrow(() -> new Device("DEV006", "172.16.0.1", "NYC"));
     }
 }

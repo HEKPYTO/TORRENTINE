@@ -1,7 +1,7 @@
 package test.validate;
 
 import base.Computer;
-import base.NetworkDevice;
+import base.Device;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -9,13 +9,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ComputerValidationTest {
     private Computer computer;
-    private NetworkDevice testDevice;
+    private Device testDevice;
 
     @BeforeEach
     void setUp() {
         computer = new Computer("CPU001", "172.16.1.1", "SFO",
                 2000, 75.0, 150.0, 2000000L);
-        testDevice = new NetworkDevice("NET001", "172.16.1.10", "SFO");
+        testDevice = new Device("NET001", "172.16.1.10", "SFO");
     }
 
     @Test
@@ -46,19 +46,64 @@ class ComputerValidationTest {
     }
 
     @Test
+    void shouldValidateStorageCapacitySettings() {
+        // Test positive capacity
+        computer.setStorageCapacity(3000000L);
+        assertEquals(3000000L, computer.getStorageCapacity(), "Should accept larger capacity");
+
+        // Test zero capacity
+        computer.setStorageCapacity(0L);
+        assertEquals(0L, computer.getStorageCapacity(), "Should accept zero capacity");
+
+        // Test negative capacity
+        computer.setStorageCapacity(-1000L);
+        assertEquals(0L, computer.getStorageCapacity(), "Should convert negative to zero");
+
+        // Test maximum value
+        computer.setStorageCapacity(Long.MAX_VALUE);
+        assertEquals(Long.MAX_VALUE, computer.getStorageCapacity(), "Should accept maximum long value");
+    }
+
+    @Test
+    void shouldValidateUsedStorageSettings() {
+        computer.setUsedStorage(1000000L);
+        assertEquals(1000000L, computer.getUsedStorage(), "Should set valid used storage");
+
+        computer.setUsedStorage(3000000L);
+        assertEquals(2000000L, computer.getUsedStorage(), "Should cap at capacity");
+
+        computer.setUsedStorage(-500L);
+        assertEquals(0L, computer.getUsedStorage(), "Should handle negative value");
+
+        computer.setUsedStorage(0L);
+        assertEquals(0L, computer.getUsedStorage(), "Should accept zero");
+
+        computer.setUsedStorage(1500000L);
+        computer.setStorageCapacity(1000000L);
+        assertEquals(1500000L, computer.getUsedStorage(), "Used storage remains unchanged when capacity decreases");
+
+        computer.setUsedStorage(1500000L);
+        assertEquals(1000000L, computer.getUsedStorage(), "New used storage should respect current capacity");
+
+        computer.setStorageCapacity(Long.MAX_VALUE);
+        computer.setUsedStorage(Long.MAX_VALUE);
+        assertEquals(Long.MAX_VALUE, computer.getUsedStorage(), "Should handle maximum long value");
+    }
+
+    @Test
     void shouldInheritRouterFunctionality() {
         computer.addDevice(testDevice);
         assertEquals(1, computer.getConnectedDevices().size(), "Should have one connected device");
         assertTrue(computer.getConnectedDevices().contains(testDevice), "Should contain added device");
         assertEquals("NET001", computer.getRoutingTable().get("172.16.1.10"), "Should map IP to device ID");
 
-        NetworkDevice testDevice2 = new NetworkDevice("NET002", "172.16.1.20", "SFO");
+        Device testDevice2 = new Device("NET002", "172.16.1.20", "SFO");
         computer.addDevice(testDevice2);
         assertEquals(2, computer.getConnectedDevices().size(), "Should have two connected devices");
         assertTrue(computer.getConnectedDevices().contains(testDevice2), "Should contain second device");
         assertEquals("NET002", computer.getRoutingTable().get("172.16.1.20"), "Should map second IP");
 
-        NetworkDevice conflictDevice = new NetworkDevice("NET003", "172.16.1.10", "SFO");
+        Device conflictDevice = new Device("NET003", "172.16.1.10", "SFO");
         computer.addDevice(conflictDevice);
         assertEquals("NET003", computer.getRoutingTable().get("172.16.1.10"), "Should update routing for conflicting IP");
 

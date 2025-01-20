@@ -1,7 +1,7 @@
 package test.build;
 
+import base.Device;
 import base.Router;
-import base.NetworkDevice;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -12,14 +12,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RouterTest {
     private Router router;
-    private NetworkDevice device1;
-    private NetworkDevice device2;
+    private Device device1;
+    private Device device2;
 
     @BeforeEach
     void setUp() {
         router = new Router("RTR001", "192.168.1.1", "NYC", 1000);
-        device1 = new NetworkDevice("DEV001", "192.168.1.2", "NYC");
-        device2 = new NetworkDevice("DEV002", "192.168.1.3", "LAX");
+        device1 = new Device("DEV001", "192.168.1.2", "NYC");
+        device2 = new Device("DEV002", "192.168.1.3", "LAX");
     }
 
     @Test
@@ -46,6 +46,36 @@ class RouterTest {
     }
 
     @Test
+    void removeDeviceShouldUpdateConnections() {
+        router.addDevice(device1);
+        router.addDevice(device2);
+
+        assertTrue(router.removeDevice(device1), "Should successfully remove existing device");
+        assertEquals(1, router.getConnectedDevices().size(), "Should have one remaining device");
+        assertFalse(router.getRoutingTable().containsKey("192.168.1.2"), "Should remove from routing table");
+        assertTrue(router.getConnectedDevices().contains(device2), "Should maintain unremoved device");
+    }
+
+    @Test
+    void removeDeviceShouldHandleEdgeCases() {
+        router.addDevice(device1);
+        router.addDevice(device2);
+        router.addDevice(device1); // Add duplicate device
+
+        assertTrue(router.removeDevice(device1), "Should remove first occurrence of device");
+        assertEquals(2, router.getConnectedDevices().size(), "Should have two devices remaining");
+        assertFalse(router.getRoutingTable().containsKey("192.168.1.2"), "Should remove routing entry even with duplicate device");
+
+        assertTrue(router.removeDevice(device1), "Should remove duplicate device");
+        assertEquals(1, router.getConnectedDevices().size(), "Should have one device remaining");
+        assertFalse(router.getRoutingTable().containsKey("192.168.1.2"), "Routing entry should remain removed");
+        assertTrue(router.getRoutingTable().containsKey("192.168.1.3"), "Other device's routing entry should remain");
+
+        Device nonExistentDevice = new Device("DEV999", "192.168.1.100", "NYC");
+        assertFalse(router.removeDevice(nonExistentDevice), "Should return false for non-existent device");
+    }
+
+    @Test
     void getRoutingTableShouldReturnCurrentRoutes() {
         router.addDevice(device1);
         router.addDevice(device2);
@@ -62,7 +92,7 @@ class RouterTest {
         router.addDevice(device2);
         router.addDevice(device1); // Adding duplicate
 
-        List<NetworkDevice> devices = router.getConnectedDevices();
+        List<Device> devices = router.getConnectedDevices();
         assertEquals(3, devices.size());
         assertTrue(devices.contains(device1));
         assertTrue(devices.contains(device2));

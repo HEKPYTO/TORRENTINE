@@ -1,7 +1,7 @@
 package test.validate;
 
+import base.Device;
 import base.Router;
-import base.NetworkDevice;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -12,14 +12,14 @@ import java.util.Map;
 
 class RouterValidationTest {
     private Router router;
-    private NetworkDevice device1;
-    private NetworkDevice device2;
+    private Device device1;
+    private Device device2;
 
     @BeforeEach
     void setUp() {
         router = new Router("RTR100", "172.16.1.1", "SFO", 2000);
-        device1 = new NetworkDevice("NET001", "172.16.1.10", "SFO");
-        device2 = new NetworkDevice("NET002", "172.16.1.20", "SFO");
+        device1 = new Device("NET001", "172.16.1.10", "SFO");
+        device2 = new Device("NET002", "172.16.1.20", "SFO");
     }
 
     @Test
@@ -80,12 +80,12 @@ class RouterValidationTest {
         assertEquals(2, routingTable.size(), "Table should have two entries");
         assertEquals("NET002", routingTable.get("172.16.1.20"), "Should map second IP to correct device ID");
 
-        NetworkDevice device3 = new NetworkDevice("NET003", "172.16.1.10", "SFO");
+        Device device3 = new Device("NET003", "172.16.1.10", "SFO");
         router.addDevice(device3);
         assertEquals(2, routingTable.size(), "Table size should remain same with IP conflict");
         assertEquals("NET003", routingTable.get("172.16.1.10"), "Should update mapping for conflicting IP");
 
-        NetworkDevice device4 = new NetworkDevice("NET004", "172.16.1.10", "SFO");
+        Device device4 = new Device("NET004", "172.16.1.10", "SFO");
         router.addDevice(device4);
         assertEquals(2, routingTable.size(), "Table size should remain stable with multiple conflicts");
         assertEquals("NET004", routingTable.get("172.16.1.10"), "Should update mapping for multiple conflicts");
@@ -93,7 +93,7 @@ class RouterValidationTest {
 
     @Test
     void shouldManageConnectedDevicesCorrectly() {
-        List<NetworkDevice> devices = router.getConnectedDevices();
+        List<Device> devices = router.getConnectedDevices();
         assertTrue(devices.isEmpty(), "Initial device list should be empty");
 
         router.addDevice(device1);
@@ -116,6 +116,26 @@ class RouterValidationTest {
         assertEquals(device1, devices.get(2), "Third addition should be first device again");
         assertEquals(device2, devices.get(3), "Fourth addition should be second device again");
     }
+
+    @Test
+    void shouldRemoveDevicesCorrectly() {
+        router.addDevice(device1);
+        router.addDevice(device2);
+
+        assertTrue(router.removeDevice(device1), "Should return true when removing existing device");
+        assertEquals(1, router.getConnectedDevices().size(), "Should have one remaining device");
+        assertFalse(router.getRoutingTable().containsKey("172.16.1.10"), "Should remove device from routing table");
+        assertTrue(router.getConnectedDevices().contains(device2), "Should keep unremoved device");
+        assertEquals("NET002", router.getRoutingTable().get("172.16.1.20"), "Should keep unremoved device's routing entry");
+
+        assertFalse(router.removeDevice(device1), "Should return false when removing already removed device");
+        assertTrue(router.removeDevice(device2), "Should remove last device");
+        assertTrue(router.getConnectedDevices().isEmpty(), "Should have no devices left");
+        assertTrue(router.getRoutingTable().isEmpty(), "Should have empty routing table");
+
+        assertFalse(router.removeDevice(null), "Should handle null device gracefully");
+    }
+
 
     @Test
     void shouldInheritNetworkDeviceFunctionality() {
