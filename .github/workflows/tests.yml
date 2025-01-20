@@ -42,18 +42,13 @@ jobs:
             --class-path out/production/Torrent \
             --scan-class-path \
             --include-classname ".*Test" \
-            --reports-dir=test-results
+            --reports-dir=test-results \
+            --report-type xml
 
-      - name: Install Allure CLI
+      - name: Convert XML to HTML
         run: |
-          wget https://github.com/allure-framework/allure2/releases/download/2.20.0/allure-2.20.0.tgz -O allure.tgz
-          tar -xzf allure.tgz
-          sudo mv allure-2.20.0 /opt/allure
-          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
-
-      - name: Generate HTML Report
-        run: |
-          allure generate test-results -o test-results-html
+          apt-get update && apt-get install -y xsltproc
+          xsltproc -o test-results-html/index.html /usr/share/xml/docbook/stylesheet/docbook-xsl/xhtml/docbook.xsl test-results/TEST-*.xml
 
       - name: Upload Test Results (HTML)
         if: always()
