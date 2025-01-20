@@ -19,10 +19,15 @@ jobs:
           persist-credentials: false
           lfs: true
 
+      - name: GitLeaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Create lib directory
@@ -42,17 +47,11 @@ jobs:
             --class-path out/production/Torrent \
             --scan-class-path \
             --include-classname ".*Test" \
-            --reports-dir=test-results \
-            --report-type xml
+            --reports-dir=test-results
 
-      - name: Convert XML to HTML
-        run: |
-          apt-get update && apt-get install -y xsltproc
-          xsltproc -o test-results-html/index.html /usr/share/xml/docbook/stylesheet/docbook-xsl/xhtml/docbook.xsl test-results/TEST-*.xml
-
-      - name: Upload Test Results (HTML)
+      - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-html
-          path: test-results-html/
+          name: test-results
+          path: test-results/
