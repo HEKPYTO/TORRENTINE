@@ -9,9 +9,9 @@ public class Computer extends Router {
     public Computer(String deviceID, String ipAddress, String location,
                     int bandwidth, double maxUploadSpeed, double maxDownloadSpeed, long storageCapacity) {
         super(deviceID, ipAddress, location, bandwidth);
-        this.maxUploadSpeed = maxUploadSpeed;
-        this.maxDownloadSpeed = maxDownloadSpeed;
-        this.storageCapacity = storageCapacity;
+        this.maxUploadSpeed = Math.max(maxUploadSpeed, 0);
+        this.maxDownloadSpeed = Math.max(maxDownloadSpeed, 0);
+        this.storageCapacity = Math.max(storageCapacity, 0);
         this.usedStorage = 0;
     }
 

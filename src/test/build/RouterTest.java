@@ -72,4 +72,11 @@ class RouterTest {
     void getBandwidthShouldReturnInitializedValue() {
         assertEquals(1000, router.getBandwidth());
     }
+
+    @Test
+    void shouldHandleNullDevice() {
+        router.addDevice(null);
+        assertEquals(0, router.getConnectedDevices().size(), "Should not add null device");
+        assertTrue(router.getRoutingTable().isEmpty(), "Routing table should remain empty");
+    }
 }

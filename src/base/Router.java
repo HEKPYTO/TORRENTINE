@@ -15,6 +15,7 @@ public class Router extends NetworkDevice {
     }
 
     public void addDevice(NetworkDevice device) {
+        if (device == null) return;
         connectedDevices.add(device);
         routingTable.put(device.getIpAddress(), device.getDeviceID());
     }
