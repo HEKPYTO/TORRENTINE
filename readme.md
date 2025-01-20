@@ -115,7 +115,7 @@ Comprehensive test suite covering:
 ## Getting Started
 
 ### Prerequisites
-- Java JDK 8 or higher
+- Java JDK 21 or higher
 - JUnit 5.7.0+ for testing
 
 ### Building the Project
