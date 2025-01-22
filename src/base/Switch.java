@@ -28,10 +28,7 @@ public class Switch extends Device {
     }
 
     public boolean removeDevice(int port) {
-        if (port < 1 || port > portCount) {
-            return false;
-        }
-        return portMap.remove(port) != null;
+        return port > 0 && port <= portCount && portMap.remove(port) != null;
     }
 
     public Device getConnectedDevice(int port) {
