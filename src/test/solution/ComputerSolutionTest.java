@@ -75,7 +75,7 @@ class ComputerSolutionTest {
         assertEquals(0L, computer.getUsedStorage(), "Should handle negative value");
 
         computer.setUsedStorage(2000000L);
-        assertEquals(1000000L, computer.getUsedStorage(), "Should cap at capacity");
+        assertEquals(1000000L, computer.getUsedStorage(), "Should be cap at capacity");
     }
 
     @Test
