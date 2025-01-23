@@ -57,6 +57,13 @@ jobs:
             echo "No changes in solution directory."
           fi
 
+      - name: Exit if No Changes Detected
+        run: |
+          if [ ! -f student_changes.txt ] && [ ! -f solution_changes.txt ]; then
+            echo "No changes detected in both directories, exiting workflow."
+            exit 0
+          fi
+
       - name: Create Zip Archives
         run: |
           if [ -f student_changes.txt ]; then
