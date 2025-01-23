@@ -38,36 +38,57 @@ jobs:
             --exclude 'test/validate/' \
             src/ solution/
 
-      - name: Check for Changes in Student Directory
-        id: check_student_changes
+      - name: Get Latest Release Assets
+        id: latest_release
         run: |
-          git diff --exit-code --quiet student || echo "Changes detected in student directory" > student_changes.txt
-          if [ -f student_changes.txt ]; then
-            echo "Student directory has changes."
-            echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
-          else
-            echo "No changes in student directory."
-            echo "STUDENT_CHANGED=false" >> $GITHUB_ENV
+          latest_release=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest)
+          student_zip_url=$(echo "$latest_release" | jq -r '.assets[] | select(.name == "student.zip") | .browser_download_url')
+          solution_zip_url=$(echo "$latest_release" | jq -r '.assets[] | select(.name == "solution.zip") | .browser_download_url')
+          echo "STUDENT_ZIP_URL=$student_zip_url" >> $GITHUB_ENV
+          echo "SOLUTION_ZIP_URL=$solution_zip_url" >> $GITHUB_ENV
+
+      - name: Download Latest Release Assets
+        run: |
+          if [ -n "$STUDENT_ZIP_URL" ]; then
+            curl -L $STUDENT_ZIP_URL -o latest_student.zip
+          fi
+          if [ -n "$SOLUTION_ZIP_URL" ]; then
+            curl -L $SOLUTION_ZIP_URL -o latest_solution.zip
           fi
 
-      - name: Check for Changes in Solution Directory
-        id: check_solution_changes
+      - name: Compare Student Directory with Latest Release
+        id: compare_student
         run: |
-          git diff --exit-code --quiet solution || echo "Changes detected in solution directory" > solution_changes.txt
-          if [ -f solution_changes.txt ]; then
-            echo "Solution directory has changes."
-            echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
+          if [ -f latest_student.zip ]; then
+            unzip -q latest_student.zip -d latest_student
+            if ! diff -r latest_student student; then
+              echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
+            fi
+            rm -rf latest_student
           else
-            echo "No changes in solution directory."
-            echo "SOLUTION_CHANGED=false" >> $GITHUB_ENV
+            echo "No previous student.zip found."
+            echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Compare Solution Directory with Latest Release
+        id: compare_solution
+        run: |
+          if [ -f latest_solution.zip ]; then
+            unzip -q latest_solution.zip -d latest_solution
+            if ! diff -r latest_solution solution; then
+              echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
+            fi
+            rm -rf latest_solution
+          else
+            echo "No previous solution.zip found."
+            echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
           fi
 
       - name: Exit if No Changes Detected
+        if: ${{ env.STUDENT_CHANGED != 'true' && env.SOLUTION_CHANGED != 'true' }}
         run: |
-          if [ "$STUDENT_CHANGED" == "false" ] && [ "$SOLUTION_CHANGED" == "false" ]; then
-            echo "No changes detected in both directories, exiting workflow."
-            exit 0
-          fi
+          echo "No changes detected in both directories, exiting workflow."
+          exit 0
 
       - name: Create Zip Archives
         if: ${{ env.STUDENT_CHANGED == 'true' || env.SOLUTION_CHANGED == 'true' }}
@@ -95,4 +116,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cleanup Temporary Files
-        run: rm -rf student.zip solution.zip
+        run: rm -rf latest_student.zip latest_solution.zip student.zip solution.zip
