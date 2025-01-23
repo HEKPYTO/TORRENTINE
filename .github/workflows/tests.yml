@@ -48,6 +48,11 @@ jobs:
             --scan-class-path \
             --include-classname ".*Test" \
             --reports-dir=test-results
+          
+      - name: Run Main
+        run: |
+          java -cp out/production/Torrent simulation.Simulation
+        continue-on-error: false
 
       - name: Upload Test Results
         if: always()
