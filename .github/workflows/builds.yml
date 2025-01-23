@@ -41,11 +41,21 @@ jobs:
         id: check_student_changes
         run: |
           git diff --exit-code --quiet temp/student || echo "Changes detected in student directory" > student_changes.txt
+          if [ -f student_changes.txt ]; then
+            echo "Student directory has changes."
+          else
+            echo "No changes in student directory."
+          fi
 
       - name: Check for Changes in Solution Directory
         id: check_solution_changes
         run: |
           git diff --exit-code --quiet temp/solution || echo "Changes detected in solution directory" > solution_changes.txt
+          if [ -f solution_changes.txt ]; then
+            echo "Solution directory has changes."
+          else
+            echo "No changes in solution directory."
+          fi
 
       - name: Create Zip Archives
         run: |
