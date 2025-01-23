@@ -43,10 +43,10 @@ jobs:
           git diff --exit-code --quiet temp/student || echo "Changes detected in student directory" > student_changes.txt
           if [ -f student_changes.txt ]; then
             echo "Student directory has changes."
-            echo "true" >> $GITHUB_ENV
+            echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
           else
             echo "No changes in student directory."
-            echo "false" >> $GITHUB_ENV
+            echo "STUDENT_CHANGED=false" >> $GITHUB_ENV
           fi
 
       - name: Check for Changes in Solution Directory
@@ -55,10 +55,10 @@ jobs:
           git diff --exit-code --quiet temp/solution || echo "Changes detected in solution directory" > solution_changes.txt
           if [ -f solution_changes.txt ]; then
             echo "Solution directory has changes."
-            echo "true" >> $GITHUB_ENV
+            echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
           else
             echo "No changes in solution directory."
-            echo "false" >> $GITHUB_ENV
+            echo "SOLUTION_CHANGED=false" >> $GITHUB_ENV
           fi
 
       - name: Exit if No Changes Detected
@@ -69,6 +69,7 @@ jobs:
           fi
 
       - name: Create Zip Archives
+        if: ${{ env.STUDENT_CHANGED == 'true' || env.SOLUTION_CHANGED == 'true' }}
         run: |
           if [ "$STUDENT_CHANGED" == "true" ]; then
             zip -r student.zip temp/student
@@ -78,6 +79,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
+        if: ${{ env.STUDENT_CHANGED == 'true' || env.SOLUTION_CHANGED == 'true' }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
