@@ -74,6 +74,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
+        if: ${{ steps.check_student_changes.outputs.result == 'Changes detected in student directory' || steps.check_solution_changes.outputs.result == 'Changes detected in solution directory' }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
