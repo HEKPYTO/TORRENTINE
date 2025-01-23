@@ -42,12 +42,21 @@ jobs:
               src/ build/solution/
           fi
 
+      - name: Debug Directory
+        run: |
+          echo "Processing ${{ matrix.directory }}"
+          ls -la build/
+          ls -la build/${{ matrix.directory }} || echo "Directory not found"
+
       - name: Force Add Changes
         run: |
+          git status
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -f build/${{ matrix.directory }}
+          git status
           git diff --staged --quiet || git commit -m "Sync build/${{ matrix.directory }} directory"
+          git status
 
       - name: Push Changes
         uses: ad-m/github-push-action@master
