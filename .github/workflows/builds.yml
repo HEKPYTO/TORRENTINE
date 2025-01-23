@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write  # Required for creating releases and uploading assets
+  contents: write
 
 jobs:
   create-release:
@@ -39,10 +39,8 @@ jobs:
 
       - name: Create Zip Archives
         run: |
-          cd temp
-          zip -r ../student.zip student
-          zip -r ../solution.zip solution
-        working-directory: temp
+          zip -r student.zip temp/student
+          zip -r solution.zip temp/solution
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
