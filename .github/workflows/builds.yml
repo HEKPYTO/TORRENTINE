@@ -13,36 +13,89 @@ jobs:
   create-release:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Get Latest Release
+        id: latest_release
+        run: |
+          LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/latest" || echo '{"tag_name": "v0"}')
+          
+          LATEST_TAG=$(echo "$LATEST_RELEASE" | jq -r .tag_name)
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+          if [ "$LATEST_TAG" != "v0" ]; then
+            # Download latest release artifacts if available
+            curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name=="student.zip") | .browser_download_url')" \
+              -o latest_student.zip || true
+          
+            curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name=="solution.zip") | .browser_download_url')" \
+              -o latest_solution.zip || true
+          fi
+
       - name: Prepare Build Directories
         run: |
           mkdir -p student solution
+
+          # Prepare student package
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/solution/' \
             --exclude 'base/' \
             src/ student/
-          
           cd student && zip -r ../student.zip . && cd ..
-          
+
+          # Prepare solution package
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/validate/' \
             src/ solution/
-          
           cd solution && zip -r ../solution.zip . && cd ..
 
-      - name: Create Zip Archives
+      - name: Check for Changes
+        id: check_changes
         run: |
-          zip -r student.zip student
-          zip -r solution.zip solution
+          # Compare zip contents and file hashes to detect changes
+          compare_zips() {
+            if [ ! -f "$1" ] || [ ! -f "$2" ]; then
+              echo "true"
+              return
+            fi
+          
+            # Compare zip contents and file hashes
+            diff <(unzip -l "$1" | awk '{print $4}' | sort) \
+                 <(unzip -l "$2" | awk '{print $4}' | sort) >/dev/null 2>&1 && \
+            diff <(unzip -p "$1" | md5sum) \
+                 <(unzip -p "$2" | md5sum) >/dev/null 2>&1
+          
+            if [ $? -ne 0 ]; then
+              echo "true"
+            else
+              echo "false"
+            fi
+          }
+
+          # Check changes for student and solution packages
+          STUDENT_CHANGED=$(compare_zips "latest_student.zip" "student.zip")
+          SOLUTION_CHANGED=$(compare_zips "latest_solution.zip" "solution.zip")
+
+          CHANGES_DETECTED="false"
+          if [ "$STUDENT_CHANGED" = "true" ] || [ "$SOLUTION_CHANGED" = "true" ]; then
+            CHANGES_DETECTED="true"
+          fi
+
+          echo "changes_detected=$CHANGES_DETECTED" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
+        if: steps.check_changes.outputs.changes_detected == 'true'
         uses: softprops/action-gh-release@v1
         with:
           files: |
@@ -50,8 +103,12 @@ jobs:
             solution.zip
           tag_name: v${{ github.run_number }}
           name: Build V${{ github.run_number }}
-          body: This release contains student and solution packages.
+          body: |
+            This release contains updated student and solution packages.
+            Previous release: ${{ steps.latest_release.outputs.latest_tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cleanup
-        run: rm -rf student.zip solution.zip
+        if: always()
+        run: |
+          rm -f student.zip solution.zip latest_student.zip latest_solution.zip
