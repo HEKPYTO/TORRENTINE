@@ -1,4 +1,4 @@
-name: Build Directories
+name: Create Release
 
 on:
   workflow_run:
@@ -8,51 +8,55 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: write  # Required for creating releases and uploading assets
 
 jobs:
-  sync-directories:
+  create-release:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Create Build Directory
-        run: mkdir -p build/student build/solution
-
-      - name: Sync Directories
+      - name: Prepare Build Directories
         run: |
+          mkdir -p temp/student temp/solution
+
           # Sync student directory
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/solution/' \
             --exclude 'base/' \
-            src/ build/student/
+            src/ temp/student/
 
           # Sync solution directory
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/validate/' \
-            src/ build/solution/
+            src/ temp/solution/
 
-          # Display results
-          ls -la build/student
-          ls -la build/solution
-
-      - name: Force Add Changes
+      - name: Create Zip Archives
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -f build/student build/solution
-          git status
-          git commit -m "Sync build directories" || echo "No changes to commit"
+          cd temp
+          zip -r ../student.zip student
+          zip -r ../solution.zip solution
+        working-directory: temp
 
-      - name: Push Changes
-        uses: ad-m/github-push-action@master
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
-          force: true
+          files: |
+            student.zip
+            solution.zip
+          tag_name: v${{ github.run_number }}
+          name: Build Release ${{ github.run_number }}
+          body: |
+            This release contains the following build directories:
+            - **student**
+            - **solution**
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup Temporary Files
+        run: rm -rf temp student.zip solution.zip
