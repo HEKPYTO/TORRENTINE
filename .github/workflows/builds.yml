@@ -14,49 +14,41 @@ jobs:
   sync-directories:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        directory: ["student", "solution"]
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-      - name: Clean Directory
-        run: |
-          rm -rf build/${{ matrix.directory }}
-          mkdir -p build/${{ matrix.directory }}
+      - name: Create Build Directory
+        run: mkdir -p build/student build/solution
 
-      - name: Sync Directory
+      - name: Sync Directories
         run: |
-          if [ "${{ matrix.directory }}" = "student" ]; then
-            rsync -av --delete \
-              --exclude 'test/build/' \
-              --exclude 'test/solution/' \
-              --exclude 'base/' \
-              src/ build/student/
-          elif [ "${{ matrix.directory }}" = "solution" ]; then
-            rsync -av --delete \
-              --exclude 'test/build/' \
-              --exclude 'test/validate/' \
-              src/ build/solution/
-          fi
+          # Sync student directory
+          rsync -av --delete \
+            --exclude 'test/build/' \
+            --exclude 'test/solution/' \
+            --exclude 'base/' \
+            src/ build/student/
 
-      - name: Debug Directory
-        run: |
-          echo "Processing ${{ matrix.directory }}"
-          ls -la build/
-          ls -la build/${{ matrix.directory }} || echo "Directory not found"
+          # Sync solution directory
+          rsync -av --delete \
+            --exclude 'test/build/' \
+            --exclude 'test/validate/' \
+            src/ build/solution/
+
+          # Display results
+          ls -la build/student
+          ls -la build/solution
 
       - name: Force Add Changes
         run: |
-          git status
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -f build/${{ matrix.directory }}
+          git add -f build/student build/solution
           git status
-          git diff --staged --quiet || git commit -m "Sync build/${{ matrix.directory }} directory"
-          git status
+          git commit -m "Sync build directories" || echo "No changes to commit"
 
       - name: Push Changes
         uses: ad-m/github-push-action@master

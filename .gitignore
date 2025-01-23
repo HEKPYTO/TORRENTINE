@@ -31,5 +31,4 @@ bin/
 src/test/testing/
 solution
 student
-build/student
-build/solution
+build/
