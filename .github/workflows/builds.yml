@@ -24,8 +24,8 @@ jobs:
 
       - name: Clean Directory
         run: |
-          rm -rf ${{ matrix.directory }}
-          mkdir -p ${{ matrix.directory }}
+          rm -rf build/${{ matrix.directory }}
+          mkdir -p build/${{ matrix.directory }}
 
       - name: Sync Directory
         run: |
@@ -34,20 +34,20 @@ jobs:
               --exclude 'test/build/' \
               --exclude 'test/solution/' \
               --exclude 'base/' \
-              src/ student/
+              src/ build/student/
           elif [ "${{ matrix.directory }}" = "solution" ]; then
             rsync -av --delete \
               --exclude 'test/build/' \
               --exclude 'test/validate/' \
-              src/ solution/
+              src/ build/solution/
           fi
 
       - name: Force Add Changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -f ${{ matrix.directory }}
-          git diff --staged --quiet || git commit -m "Sync ${{ matrix.directory }} directory"
+          git add -f build/${{ matrix.directory }}
+          git diff --staged --quiet || git commit -m "Sync build/${{ matrix.directory }} directory"
 
       - name: Push Changes
         uses: ad-m/github-push-action@master
