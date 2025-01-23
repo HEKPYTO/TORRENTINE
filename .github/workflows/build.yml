@@ -1,0 +1,44 @@
+name: Sync Directories
+
+on:
+  push:
+    paths:
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  sync-directories:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ["student", "solution"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync Directory
+        run: |
+          if [ "${{ matrix.directory }}" = "student" ]; then
+            rsync -av --delete \
+              --exclude 'test/build/' \
+              --exclude 'test/solution/' \
+              --exclude 'base/'
+              src/ student/
+          elif [ "${{ matrix.directory }}" = "solution" ]; then
+            rsync -av --delete \
+              --exclude 'test/build/' \
+              --exclude 'test/validate/' \
+              src/ solution/
+          fi
+
+      - name: Commit Changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add ${{ matrix.directory }}
+          git diff --staged --quiet || git commit -m "Sync ${{ matrix.directory }} directory"
+
+      - name: Push Changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
