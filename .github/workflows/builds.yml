@@ -3,8 +3,7 @@ name: Create Release
 on:
   workflow_run:
     workflows: ["Java Tests"]
-    types:
-      - completed
+    types: [completed]
     branches: [main]
 
 permissions:
@@ -22,86 +21,24 @@ jobs:
 
       - name: Prepare Build Directories
         run: |
-          # Ensure student and solution directories exist
           mkdir -p student solution
-
-          # Sync student directory
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/solution/' \
             --exclude 'base/' \
             src/ student/
 
-          # Sync solution directory
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/validate/' \
             src/ solution/
 
-      - name: Get Latest Release Assets
-        id: latest_release
-        run: |
-          latest_release=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest)
-          student_zip_url=$(echo "$latest_release" | jq -r '.assets[] | select(.name == "student.zip") | .browser_download_url')
-          solution_zip_url=$(echo "$latest_release" | jq -r '.assets[] | select(.name == "solution.zip") | .browser_download_url')
-          echo "STUDENT_ZIP_URL=$student_zip_url" >> $GITHUB_ENV
-          echo "SOLUTION_ZIP_URL=$solution_zip_url" >> $GITHUB_ENV
-
-      - name: Download Latest Release Assets
-        run: |
-          if [ -n "$STUDENT_ZIP_URL" ]; then
-            curl -L $STUDENT_ZIP_URL -o latest_student.zip
-          fi
-          if [ -n "$SOLUTION_ZIP_URL" ]; then
-            curl -L $SOLUTION_ZIP_URL -o latest_solution.zip
-          fi
-
-      - name: Compare Student Directory with Latest Release
-        id: compare_student
-        run: |
-          if [ -f latest_student.zip ]; then
-            unzip -q latest_student.zip -d latest_student
-            if ! diff -r latest_student student; then
-              echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
-            fi
-            rm -rf latest_student
-          else
-            echo "No previous student.zip found."
-            echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
-          fi
-
-      - name: Compare Solution Directory with Latest Release
-        id: compare_solution
-        run: |
-          if [ -f latest_solution.zip ]; then
-            unzip -q latest_solution.zip -d latest_solution
-            if ! diff -r latest_solution solution; then
-              echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
-            fi
-            rm -rf latest_solution
-          else
-            echo "No previous solution.zip found."
-            echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
-          fi
-
-      - name: Exit if No Changes Detected
-        if: ${{ env.STUDENT_CHANGED != 'true' && env.SOLUTION_CHANGED != 'true' }}
-        run: |
-          echo "No changes detected in both directories, exiting workflow."
-          exit 0
-
       - name: Create Zip Archives
-        if: ${{ env.STUDENT_CHANGED == 'true' || env.SOLUTION_CHANGED == 'true' }}
         run: |
-          if [ "$STUDENT_CHANGED" == "true" ]; then
-            zip -r student.zip student
-          fi
-          if [ "$SOLUTION_CHANGED" == "true" ]; then
-            zip -r solution.zip solution
-          fi
+          zip -r student.zip student
+          zip -r solution.zip solution
 
       - name: Create GitHub Release
-        if: ${{ env.STUDENT_CHANGED == 'true' || env.SOLUTION_CHANGED == 'true' }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
@@ -109,11 +46,8 @@ jobs:
             solution.zip
           tag_name: v${{ github.run_number }}
           name: Build V${{ github.run_number }}
-          body: |
-            This release contains the following build directories:
-            - **student** (if changes detected)
-            - **solution** (if changes detected)
+          body: This release contains student and solution packages.
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cleanup Temporary Files
-        run: rm -rf latest_student.zip latest_solution.zip student.zip solution.zip
+      - name: Cleanup
+        run: rm -rf student.zip solution.zip
