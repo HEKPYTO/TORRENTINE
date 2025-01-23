@@ -1,13 +1,19 @@
-name: Sync Directories
+name: Build Directories
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'src/**'
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+    paths:
+      - 'src/**'
 
 jobs:
   sync-directories:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,7 +27,7 @@ jobs:
             rsync -av --delete \
               --exclude 'test/build/' \
               --exclude 'test/solution/' \
-              --exclude 'base/'
+              --exclude 'base/' \
               src/ student/
           elif [ "${{ matrix.directory }}" = "solution" ]; then
             rsync -av --delete \
@@ -32,6 +38,7 @@ jobs:
 
       - name: Commit Changes
         run: |
+          git pull
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add ${{ matrix.directory }}
