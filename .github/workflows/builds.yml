@@ -49,7 +49,7 @@ jobs:
             student.zip
             solution.zip
           tag_name: v${{ github.run_number }}
-          name: Build Release ${{ github.run_number }}
+          name: Build V${{ github.run_number }}
           body: |
             This release contains the following build directories:
             - **student**
