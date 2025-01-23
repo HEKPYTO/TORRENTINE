@@ -22,25 +22,26 @@ jobs:
 
       - name: Prepare Build Directories
         run: |
-          mkdir -p temp/student temp/solution
+          # Ensure student and solution directories exist
+          mkdir -p student solution
 
           # Sync student directory
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/solution/' \
             --exclude 'base/' \
-            src/ temp/student/
+            src/ student/
 
           # Sync solution directory
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/validate/' \
-            src/ temp/solution/
+            src/ solution/
 
       - name: Check for Changes in Student Directory
         id: check_student_changes
         run: |
-          git diff --exit-code --quiet temp/student || echo "Changes detected in student directory" > student_changes.txt
+          git diff --exit-code --quiet student || echo "Changes detected in student directory" > student_changes.txt
           if [ -f student_changes.txt ]; then
             echo "Student directory has changes."
             echo "STUDENT_CHANGED=true" >> $GITHUB_ENV
@@ -52,7 +53,7 @@ jobs:
       - name: Check for Changes in Solution Directory
         id: check_solution_changes
         run: |
-          git diff --exit-code --quiet temp/solution || echo "Changes detected in solution directory" > solution_changes.txt
+          git diff --exit-code --quiet solution || echo "Changes detected in solution directory" > solution_changes.txt
           if [ -f solution_changes.txt ]; then
             echo "Solution directory has changes."
             echo "SOLUTION_CHANGED=true" >> $GITHUB_ENV
@@ -72,10 +73,10 @@ jobs:
         if: ${{ env.STUDENT_CHANGED == 'true' || env.SOLUTION_CHANGED == 'true' }}
         run: |
           if [ "$STUDENT_CHANGED" == "true" ]; then
-            zip -r student.zip temp/student
+            zip -r student.zip student
           fi
           if [ "$SOLUTION_CHANGED" == "true" ]; then
-            zip -r solution.zip temp/solution
+            zip -r solution.zip solution
           fi
 
       - name: Create GitHub Release
@@ -94,4 +95,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cleanup Temporary Files
-        run: rm -rf temp student.zip solution.zip
+        run: rm -rf student.zip solution.zip
