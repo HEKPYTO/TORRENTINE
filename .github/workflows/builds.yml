@@ -13,12 +13,17 @@ permissions:
 jobs:
   sync-directories:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         directory: ["student", "solution"]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Clean Directory
+        run: |
+          rm -rf ${{ matrix.directory }}
+          mkdir -p ${{ matrix.directory }}
 
       - name: Sync Directory
         run: |
