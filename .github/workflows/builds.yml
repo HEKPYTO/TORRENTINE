@@ -63,33 +63,43 @@ jobs:
       - name: Check for Changes
         id: check_changes
         run: |
-          # Compare zip contents and file hashes to detect changes
-          compare_zips() {
-            if [ ! -f "$1" ] || [ ! -f "$2" ]; then
-              echo "true"
-              return
-            fi
-          
-            # Compare zip contents and file hashes
-            diff <(unzip -l "$1" | awk '{print $4}' | sort) \
-                 <(unzip -l "$2" | awk '{print $4}' | sort) >/dev/null 2>&1 && \
-            diff <(unzip -p "$1" | md5sum) \
-                 <(unzip -p "$2" | md5sum) >/dev/null 2>&1
-          
-            if [ $? -ne 0 ]; then
-              echo "true"
-            else
-              echo "false"
-            fi
+          # Validate ZIP files
+          validate_zip() {
+              if [ -f "$1" ] && unzip -t "$1" >/dev/null 2>&1; then
+                  echo "true"
+              else
+                  echo "false"
+              fi
           }
 
-          # Check changes for student and solution packages
+          STUDENT_VALID=$(validate_zip "latest_student.zip")
+          SOLUTION_VALID=$(validate_zip "latest_solution.zip")
+
+          if [ "$STUDENT_VALID" = "false" ] && [ "$SOLUTION_VALID" = "false" ]; then
+              echo "Both student.zip and solution.zip are invalid or missing. Assuming changes."
+              echo "changes_detected=true" >> $GITHUB_OUTPUT
+              exit 0
+          fi
+
+          # Compare zips if valid
+          compare_zips() {
+              diff <(unzip -l "$1" | awk '{print $4}' | sort) \
+                   <(unzip -l "$2" | awk '{print $4}' | sort) >/dev/null 2>&1 && \
+              diff <(unzip -p "$1" | md5sum) \
+                   <(unzip -p "$2" | md5sum) >/dev/null 2>&1
+              if [ $? -ne 0 ]; then
+                  echo "true"
+              else
+                  echo "false"
+              fi
+          }
+
           STUDENT_CHANGED=$(compare_zips "latest_student.zip" "student.zip")
           SOLUTION_CHANGED=$(compare_zips "latest_solution.zip" "solution.zip")
 
           CHANGES_DETECTED="false"
           if [ "$STUDENT_CHANGED" = "true" ] || [ "$SOLUTION_CHANGED" = "true" ]; then
-            CHANGES_DETECTED="true"
+              CHANGES_DETECTED="true"
           fi
 
           echo "changes_detected=$CHANGES_DETECTED" >> $GITHUB_OUTPUT
