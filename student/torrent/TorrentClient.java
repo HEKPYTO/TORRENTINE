@@ -1,4 +1,4 @@
-package base.torrent;
+package torrent;
 
 import base.Computer;
 import model.PeerStatus;

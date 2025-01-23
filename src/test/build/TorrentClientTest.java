@@ -1,6 +1,6 @@
 package test.build;
 
-import base.torrent.TorrentClient;
+import torrent.TorrentClient;
 import model.TorrentFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;

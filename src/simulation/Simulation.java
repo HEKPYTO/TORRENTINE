@@ -1,6 +1,6 @@
 package simulation;
 
-import base.torrent.*;
+import torrent.*;
 import model.*;
 import java.util.*;
 
