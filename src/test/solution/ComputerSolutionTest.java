@@ -108,5 +108,4 @@ class ComputerSolutionTest {
         assertEquals(computer, sameComputer, "Computers with same deviceID should be equal");
         assertNotEquals(computer, differentComputer, "Computers with different deviceID should not be equal");
     }
-
 }

@@ -37,35 +37,26 @@ jobs:
             --exclude 'test/validate/' \
             src/ temp/solution/
 
-      - name: Get Latest Tag
-        id: latest_tag
+      - name: Check for Changes in Student Directory
+        id: check_student_changes
         run: |
-          latest_tag=$(git describe --tags --abbrev=0)
-          echo "Latest tag: $latest_tag"
-          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+          git diff --exit-code --quiet temp/student || echo "Changes detected in student directory" > student_changes.txt
 
-      - name: Check for Changes in student directory
-        id: student_changes
+      - name: Check for Changes in Solution Directory
+        id: check_solution_changes
         run: |
-          git diff --exit-code -- temp/student || echo "Changes detected in student directory"
-
-      - name: Check for Changes in solution directory
-        id: solution_changes
-        run: |
-          git diff --exit-code -- temp/solution || echo "Changes detected in solution directory"
-
-      - name: Skip Release if No Changes
-        if: ${{ steps.student_changes.outcome == 'success' && steps.solution_changes.outcome == 'success' }}
-        run: echo "No changes detected in student or solution directories, skipping release creation."
+          git diff --exit-code --quiet temp/solution || echo "Changes detected in solution directory" > solution_changes.txt
 
       - name: Create Zip Archives
-        if: ${{ steps.student_changes.outcome != 'success' || steps.solution_changes.outcome != 'success' }}
         run: |
-          zip -r student.zip temp/student
-          zip -r solution.zip temp/solution
+          if [ -f student_changes.txt ]; then
+            zip -r student.zip temp/student
+          fi
+          if [ -f solution_changes.txt ]; then
+            zip -r solution.zip temp/solution
+          fi
 
       - name: Create GitHub Release
-        if: ${{ steps.student_changes.outcome != 'success' || steps.solution_changes.outcome != 'success' }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
@@ -75,8 +66,8 @@ jobs:
           name: Build V${{ github.run_number }}
           body: |
             This release contains the following build directories:
-            - **student**
-            - **solution**
+            - **student** (if changes detected)
+            - **solution** (if changes detected)
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cleanup Temporary Files
