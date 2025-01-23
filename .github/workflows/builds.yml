@@ -20,16 +20,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Get Latest Release
-        id: latest_release
-        run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0")
-          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
-
       - name: Prepare Build Directories
         run: |
           mkdir -p temp/student temp/solution
-          
+
           # Sync student directory
           rsync -av --delete \
             --exclude 'test/build/' \
@@ -43,59 +37,59 @@ jobs:
             --exclude 'test/validate/' \
             src/ temp/solution/
 
-      - name: Compare with Latest Release
-        id: compare_changes
+      - name: Check for Changes in Student Directory
+        id: check_student_changes
         run: |
-          # Extract latest release files
-          mkdir -p prev
-          if [ "$LATEST_TAG" != "v0" ]; then
-            git checkout $LATEST_TAG
-            if [ -f student.zip ]; then
-              unzip -o student.zip -d prev/
-            fi
-            if [ -f solution.zip ]; then
-              unzip -o solution.zip -d prev/
-            fi
+          git diff --exit-code --quiet temp/student || echo "Changes detected in student directory" > student_changes.txt
+          if [ -f student_changes.txt ]; then
+            echo "Student directory has changes."
+            echo "true" >> $GITHUB_ENV
+          else
+            echo "No changes in student directory."
+            echo "false" >> $GITHUB_ENV
           fi
 
-          # Compare directories
-          STUDENT_CHANGED=0
-          SOLUTION_CHANGED=0
-          
-          if ! diff -r prev/temp/student temp/student >/dev/null 2>&1; then
-            STUDENT_CHANGED=1
-          fi
-          if ! diff -r prev/temp/solution temp/solution >/dev/null 2>&1; then
-            SOLUTION_CHANGED=1
-          fi
-          
-          # Set outputs
-          echo "student_changed=${STUDENT_CHANGED}" >> $GITHUB_OUTPUT
-          echo "solution_changed=${SOLUTION_CHANGED}" >> $GITHUB_OUTPUT
-
-      - name: Create Release if Changes Detected
-        if: |
-          (steps.compare_changes.outputs.student_changed == 1 && steps.compare_changes.outputs.solution_changed == 1) ||
-          steps.compare_changes.outputs.student_changed == 1 ||
-          steps.compare_changes.outputs.solution_changed == 1
+      - name: Check for Changes in Solution Directory
+        id: check_solution_changes
         run: |
-          # Create zip files based on changes
-          if [ "${{ steps.compare_changes.outputs.student_changed }}" == "1" ]; then
+          git diff --exit-code --quiet temp/solution || echo "Changes detected in solution directory" > solution_changes.txt
+          if [ -f solution_changes.txt ]; then
+            echo "Solution directory has changes."
+            echo "true" >> $GITHUB_ENV
+          else
+            echo "No changes in solution directory."
+            echo "false" >> $GITHUB_ENV
+          fi
+
+      - name: Exit if No Changes Detected
+        run: |
+          if [ "$STUDENT_CHANGED" == "false" ] && [ "$SOLUTION_CHANGED" == "false" ]; then
+            echo "No changes detected in both directories, exiting workflow."
+            exit 0
+          fi
+
+      - name: Create Zip Archives
+        run: |
+          if [ "$STUDENT_CHANGED" == "true" ]; then
             zip -r student.zip temp/student
           fi
-          if [ "${{ steps.compare_changes.outputs.solution_changed }}" == "1" ]; then
+          if [ "$SOLUTION_CHANGED" == "true" ]; then
             zip -r solution.zip temp/solution
           fi
 
-          # Create release
-          gh release create "v${{ github.run_number }}" \
-            --title "Build V${{ github.run_number }}" \
-            --notes "This release contains updated files for changed directories" \
-            $([ -f student.zip ] && echo "student.zip") \
-            $([ -f solution.zip ] && echo "solution.zip")
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            student.zip
+            solution.zip
+          tag_name: v${{ github.run_number }}
+          name: Build V${{ github.run_number }}
+          body: |
+            This release contains the following build directories:
+            - **student** (if changes detected)
+            - **solution** (if changes detected)
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cleanup
-        if: always()
-        run: rm -rf temp prev student.zip solution.zip
+      - name: Cleanup Temporary Files
+        run: rm -rf temp student.zip solution.zip
