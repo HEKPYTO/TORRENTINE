@@ -27,11 +27,15 @@ jobs:
             --exclude 'test/solution/' \
             --exclude 'base/' \
             src/ student/
-
+          
+          cd student && zip -r ../student.zip . && cd ..
+          
           rsync -av --delete \
             --exclude 'test/build/' \
             --exclude 'test/validate/' \
             src/ solution/
+          
+          cd solution && zip -r ../solution.zip . && cd ..
 
       - name: Create Zip Archives
         run: |
